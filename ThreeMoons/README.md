@@ -1,1 +1,23 @@
-to be completed
+# Three Moons
+
+This directory contains code to replicate the three moons experiments described in section 3 of the paper.
+This code relies on the [Apple MLX framework](https://github.com/ml-explore/mlx).
+Note that the code says "planets" whenever the paper says "moons".
+
+First create a virtual python environment with the required packages:
+```
+$ ./create_venv.sh ~/venv/mlx
+$ source ~/venv/mlx/bin/activate
+```
+
+Second, run `train_planets-1head.py` to replicate the 1 head experiments.
+Do not forget to close the matplotlib windows to continue the execution.
+```
+(mlx) $ python3 train_planets-1head.py
+```
+
+Finally, run `train_planets-3heads.py` to replicate the 3 heads experiments.
+```
+(mlx) $ python3 train_planets-3heads.py
+```
+
