@@ -1,0 +1,44 @@
+# @package _global_
+defaults:
+  - /experiment/dfa/base.yaml
+n_halfembd: 64
+model:
+  _name_: mm
+  n_embd: ${eval:2 * ${n_halfembd}}
+  n_head: 8
+  n_layer: 2
+  pmem_size: ${eval:7 * ${n_halfembd}} # to have the same number of parameters as transformer. 
+  block_size: 1000 # block_size of ICLL dataset is not fixed. set it to 1000 for the safety reason. 
+  ic_dropout: 0.05 # same as the dropout hyperparameter used in Babistories task
+  hd_dropout: 0.05 # same as the dropout hyperparameter used in Babistories task
+  vocab_size: ${dataset.vocab_size}
+
+
+dataset:
+  num_examples: 100
+
+optimizer:
+  lr: 5e-4
+  weight_decay: 0.1
+
+hydra:
+  run:
+    dir: ./experiments/${model._name_}/${model.n_embd}_${model.n_head}_${model.n_layer}_${dataset.num_examples}_${optimizer.weight_decay}/
+
+trainer:
+  gradient_clip_val: 1.0
+
+wandb:
+  project: seq-icl-data
+  group: ${model._name_}
+  job_type: training
+  mode: online # choices=['online', 'offline', 'disabled']
+  name: ${model.n_embd}_${model.n_head}_${model.n_layer}_${dataset.num_examples}_${optimizer.weight_decay}
+  save_dir: "."
+  id: ${.name} # pass correct id to resume experiment!
+  # Below options should not need to be specified
+  # entity: ""  # set to name of your wandb team or just remove it
+  # log_model: False
+  # prefix: ""
+  # job_type: "train"
+  # tags: []
