@@ -12,6 +12,7 @@ from planets import PlanetsDataset
 from model import ContextMemory
 from argparse import Namespace
 
+plt.style.use('bmh')
 seed = 100
 np.random.seed(seed)
 mx.random.seed(seed)
@@ -35,6 +36,7 @@ config = Namespace(
     out_proj=True,
     out_sum=False,
     emb=False,
+    eval_batch_size=512, # set eval_batch_size to 1 to speed up plotting
 )
 
 model = ContextMemory(config)
@@ -143,27 +145,36 @@ plotgen()
 # plot the generation error over n_gen_steps steps vs. context length
 def plotctx(n_gen_steps=20):
     np.random.seed(seed)
-    fig, _ = plt.subplots(2, 1, figsize=(9, 6), sharey=True)
+    fig, _ = plt.subplots(1, 2, figsize=(9, 6), sharey=True)
     fig.suptitle(f"generation error over {n_gen_steps} steps vs. context length")
-    fig.supylabel(f"mean(abs(generated - truth)) over {n_gen_steps} steps")
+    #fig.supylabel(f"mean(abs(generated - truth)) over {n_gen_steps} steps")
+    #fig.supylabel(f"mean(abs(generated - truth))")
+    
     for i, ds in enumerate([train_dataset, val_dataset]):
-        plt.subplot(2, 1, i + 1)
+        plt.subplot(1, 2, i + 1)
         plt.ylim(-.05, 1)
-        plt.title("train dataset" if i == 0 else "val dataset")
-        x, y, period, periods = ds.get(5 - 5*i)
+        plt.title("train dataset" if i == 0 else "val dataset", fontsize=12)
+        #x, y, period, periods = ds.get(5 - 5*i)
+        x, y, period, periods = ds.get_batch_with_shifted_startpoint(5 - 5*i, batchsize=config.eval_batch_size)
+
         diffs = []
-        for thresh in range(1, config.block_size - n_gen_steps):
-            gend = model.generate(x[None, :thresh], n_gen_steps)[0]
-            diff = np.array((y[thresh-1:n_gen_steps+thresh-1] - gend[thresh:n_gen_steps+thresh]).abs()).mean()
+        for thresh in tqdm.tqdm(range(1, config.block_size - n_gen_steps)):
+            #gend = model.generate(x[:, :thresh], n_gen_steps)[0]
+            gend = model.generate(x[:, :thresh], n_gen_steps)
+            diff = np.array((y[:, thresh-1:n_gen_steps+thresh-1] - gend[:, thresh:n_gen_steps+thresh]).abs()).mean()
             diffs.append(diff)
-        plt.plot(diffs, "bx-", label="real - generated", alpha=0.5)
+
+        plt.plot(diffs, "b-", label="real - generated", alpha=0.5)
         for p in periods:
             plt.axvline(p-1, color="grey", alpha=1)
             plt.text(p, 0.75, "period", rotation=90, verticalalignment="center")
         plt.axvline(period-1, color="r")
         plt.text(period, 0.75, "total period", rotation=90, verticalalignment="center", color="r")
-        if i == 1:
-            plt.xlabel("context length for generation")
+        #if i == 1:
+        #    plt.xlabel("context length for generation")
+        if i==0:
+            plt.ylabel(f"mean(abs(generated - truth))")
+        plt.xlabel("context length for generation")
     plt.tight_layout()
     plt.show()
 plotctx(25)

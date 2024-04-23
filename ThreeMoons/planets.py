@@ -89,6 +89,32 @@ class PlanetsDataset:
         periods = [p / (self.linspace[1] - self.linspace[0]) for p in periods]
         return x, y, period, periods
 
+    def get_batch_with_shifted_startpoint(self,idx, batchsize=32):
+        periods = self.all_periods[idx]
+        
+        x,y = [], []
+
+        for i in range(batchsize):
+            start_point = np.random.randint(0, self.total_tokens - self.y_addition - self.block_size * 2 - self.shift)
+            offset = 0.3
+            linspace = self.linspace[start_point : start_point + self.block_size + self.shift + self.y_addition ]
+            sines = np.array([np.sin(2 * np.pi / p * linspace + offset) for p in periods])
+            cosines = np.array([np.cos(2 * np.pi / p * linspace + offset) for p in periods])
+            if self.observer != "sun":
+              sines[:-1] -= sines[-1]
+              cosines[:-1] -= cosines[-1]
+            data = np.stack((sines, cosines), axis=1).reshape(6, -1).T
+            x.append(data[: self.block_size].astype(np.float32))
+            y.append(data[self.shift : self.block_size + self.shift + self.y_addition].astype(np.float32))
+            
+        x,y = mx.array(np.array(x)), mx.array(np.array(y))
+
+        period = lcm_reduce(periods, 1) / (self.linspace[1] - self.linspace[0])
+        periods = [p / (self.linspace[1] - self.linspace[0]) for p in periods]
+
+
+        return x, y, period, periods
+
     def __getitem__(self, _):
         return self.get(np.random.choice(len(self.all_periods), 1)[0])
 
