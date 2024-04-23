@@ -1,7 +1,7 @@
 # Three Moons
 
 This directory contains code to replicate the three moons experiments described in section 3 of the paper.
-This code relies on the [Apple MLX framework](https://github.com/ml-explore/mlx).
+This code relies on the [Apple MLX framework](https://github.com/ml-explore/mlx) and currently only runs on Macs.
 Note that the code says "planets" whenever the paper says "moons".
 
 First create a virtual python environment with the required packages:
