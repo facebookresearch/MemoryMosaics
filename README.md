@@ -8,4 +8,7 @@ This repositories contains several subdirectories relevant to the paper.
 
 * [BabiStories](BabiStories) : the BabiStories dataset
 * [ThreeMoons](ThreeMoons) : The [mlx](https://github.com/ml-explore/mlx) code for the three moon experiments
-* ...
+* [ICLL](ICLL): Memory Mosaics code for the In-context Language Learning experiments
+* [Library](Library): A library of efficient Memory Mosaic implementation for language tasks. 
+
+[TODO: test BabiStories, ICLL, Library...]
