@@ -2,7 +2,6 @@
 
 A package of Memory Mosaics with a CUDA kernel of the leakyaverage operator. 
 
-
 <p align="center">
 <image src="figure/gpt2.png" width="260" />
 <image src="figure/gpt2-like-mosaic.png" width="400" />
@@ -14,6 +13,7 @@ Fig1: Left: Classic GPT2-small transformer. Right: GPT2-like Memory Mosaic
 </em>
 </p>
 
+
 ## Setup Requirements
 
 
@@ -23,7 +23,7 @@ conda activate mm
 pip install -r requirements.txt
 pip install pynvml
 ```
-
+[Note] cuda 11.4 has a [bug](https://forums.developer.nvidia.com/t/cuda-11-5-samples-throw-multiple-error-attribute-malloc-does-not-take-arguments/192750) during `.cu` loading. We recommend cuda >=11.5 instead.   
 
 ## Quick start
 
