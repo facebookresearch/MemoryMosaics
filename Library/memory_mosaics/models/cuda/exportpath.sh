@@ -1,1 +1,0 @@
-export CC=/usr/bin/gcc-10

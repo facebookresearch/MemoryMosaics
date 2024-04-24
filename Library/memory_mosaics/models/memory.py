@@ -34,4 +34,3 @@ class Pmem(nn.Module):
 
         return y 
 
-# hashtable memory here ...

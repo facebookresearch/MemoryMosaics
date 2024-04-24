@@ -121,14 +121,7 @@ class InContextAssoMemBlock(nn.Module): # leakyaverage key, then normalize. conv
 
         self.value_beta  = nn.Parameter(torch.ones(self.n_head) * (self.value_beta_init)/self.exp_param_scale)
         
-       
-        # # To check behaviors
-        # self.plot_probe=False if 'plot_probe' not in config.__dict__ else  config.plot_probe
-
-        # if self.plot_probe: 
-        #     self.att_for_plot = 0
-        #     self.att_for_plot_count = 0
-
+      
 
     def forward(self, x):
 
@@ -159,26 +152,11 @@ class InContextAssoMemBlock(nn.Module): # leakyaverage key, then normalize. conv
         att = self.ic_dropout(att)
         y = att @ v 
 
-        # if self.plot_probe:
-        #     with torch.no_grad():
-            
-        #         #mse = ((y - v)**2).mean()
-        #         cosine = ((y * v).sum(axis=-1) / ((y**2).sum(axis=-1).sqrt() * (v**2).sum(axis=-1).sqrt()) ).mean(0).mean(1)    
-        #         self.cosine += cosine
-        #         self.y_head_norm += y.norm(dim=-1).mean(0).mean(1)    
-        #         self.v_head_norm += v.norm(dim=-1).mean(0).mean(1)
-
+       
         y = y.transpose(1, 2).contiguous().view(B, T, C)  # re-assemble all head outputs side by side
         y = self.resid_dropout(self.c_proj(y))
 
-        # if self.plot_probe:
-        #     with torch.no_grad():
-        #         self.att_for_plot += att.view(-1,nh,T,T).mean(dim=0).cpu()
-        #         #self.att_for_plot_square += (att.view(-1,nh, T, T)**2).mean(dim=0).cpu()
-        #         self.att_for_plot_count += 1 
-        # #         self.k_norm += k.norm(dim=-1).view(-1,T).mean(dim=0).cpu()
-        # #         self.v_norm += v.norm(dim=-1).view(-1,T).mean(dim=0).cpu()
-                
+         
         return y
 
 class PersistentAssoMemBlock(nn.Module): # leakyaverage key, then normalize. convolution on value, then normalize. cheat first token
@@ -192,20 +170,13 @@ class PersistentAssoMemBlock(nn.Module): # leakyaverage key, then normalize. con
                 config={}):
         super().__init__()
         assert n_embd % n_head == 0
-        # self.ddp = int(os.environ.get("RANK", -1)) != -1
-        # self.ddp_world_size = int(os.environ["WORLD_SIZE"]) if self.ddp else 1
-
+        
         self.config = config
         self.n_head = n_head
         self.n_embd = n_embd
-        #self.v_shift = v_shift 
         self.block_size = block_size 
         self.bias = bias
-        #self.k_kernel_size = k_kernel_size
-        #self.v_kernel_size = v_kernel_size
 
-        #self.pmem_count =  pmem_count
-        #self.pmem_size = pmem_size
 
         self.att_shift = 0
         self.value_beta_init = -0.5 
@@ -236,30 +207,10 @@ class PersistentAssoMemBlock(nn.Module): # leakyaverage key, then normalize. con
         self.kernel_beta = nn.Parameter(torch.ones(self.n_head)/self.exp_param_scale) # for fp16, max float is 65536. kernel_beta < math.log(math.sqrt(65536)) ~5.5
         self.kernel_beta_upbound = 5 # assume fp16. 
 
-        # if self.pmem_count > 0:
-        #     if (layer_id+1) % self.pmem_pattern == 0:
-        #         self.value_beta  = nn.Parameter(torch.ones(self.n_head) * (-1))
-        #     else:
-        #         self.value_beta  = nn.Parameter(torch.ones(self.n_head) * 2)
-        # else:
+        
         self.value_beta  = nn.Parameter(torch.ones(self.n_head) * (self.value_beta_init) / self.exp_param_scale)
         
-        # if self.v_leaky:
-        #     self.leaky_value_beta = nn.Parameter(torch.ones(self.n_head)*2)
-
-        # # To check behaviors
-         
-        # self.plot_probe=False if 'plot_probe' not in config.__dict__ else  config.plot_probe
-
-        # if self.plot_probe: 
-        #     self.att_for_plot = 0
-        #     self.att_for_plot_square = 0
-        #     self.att_for_plot_count = 0
-        #     self.k_norm = 0 
-        #     self.v_norm = 0
-        #     self.cosine = 0
-        #     self.y_head_norm = 0
-        #     self.v_head_norm = 0
+       
 
     def forward(self, x):
         #print(x.dtype)
@@ -286,15 +237,6 @@ class PersistentAssoMemBlock(nn.Module): # leakyaverage key, then normalize. con
         y = self.resid_dropout(self.c_proj(y))
 
 
-        # with torch.no_grad():
-        #     if self.plot_probe:
-        #         self.att_for_plot += att.view(-1,nh,T,T).mean(dim=0).cpu()
-        #         self.att_for_plot_square += (att.view(-1,nh, T, T)**2).mean(dim=0).cpu()
-                
-        #         self.att_for_plot_count += 1 
-        #         self.k_norm += k.norm(dim=-1).view(-1,T).mean(dim=0).cpu()
-        #         self.v_norm += v.norm(dim=-1).view(-1,T).mean(dim=0).cpu()
-                
         return y
 
 class AttnOnlyBlock(nn.Module):
@@ -419,9 +361,7 @@ class StackAssoMem(nn.Module):
             loss = None
 
         return logits, loss
-        #CausalLMOutput = namedtuple('CausalLMOutput', ['logits'])
-        #return CausalLMOutput(logits=logits), [], None
-
+        
 
 
     def _init_weights(self, module):

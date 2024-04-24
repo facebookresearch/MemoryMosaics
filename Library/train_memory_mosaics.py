@@ -3,34 +3,32 @@ This training script can be run both on a single gpu in debug mode,
 and also in a larger training run with distributed data parallel (ddp).
 
 To run on a single GPU, example:
-$ python train_read_dream_centroid.py --batch_size=32 --compile=False
+$ python train_memory_mosaics.py --batch_size=32 
 
 To run with DDP on 4 gpus on 1 node, example:
-$ torchrun --standalone --nproc_per_node=4 train_read_dream_centroid.py
+$ torchrun --standalone --nproc_per_node=4 train_memory_mosaics.py
 
 To run with DDP on 4 gpus across 2 nodes, example:
-- Run on the first (master) node with example IP 123.456.123.456:
-$ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=0 --master_addr=123.456.123.456 --master_port=1234 train_read_dream_centroid.py
+- Run on the first (master) node with example IP xxx.xxx.xxx.xxx and example port xxx:
+$ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=0 --master_addr=xxx.xxx.xxx.xxx --master_port=xxx train_memory_mosaics.py
 - Run on the worker node:
-$ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=1 --master_addr=123.456.123.456 --master_port=1234 train_read_dream_centroid.py
+$ torchrun --nproc_per_node=8 --nnodes=2 --node_rank=1 --master_addr=xxx.xxx.xxx.xxx --master_port=xxx train_memory_mosaics.py
 (If your cluster does not have Infiniband interconnect prepend NCCL_IB_DISABLE=1)
 """
 
 import torch
 import os
 import time
-import math
-import pickle
 from contextlib import nullcontext
 import copy
 import torch.nn.functional as F
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import destroy_process_group
 import torch.distributed as dist
+
 from utils import create_logger, TimeEstimater
-
-
-from collections import OrderedDict
+from utils import init_ddp
+from utils import str2bool, get_step_lr, get_cosine_lr
 
 import tiktoken
 import argparse
@@ -41,8 +39,6 @@ import numpy as np
 from memory_mosaics.data.dataset import StoriesDataset
 from memory_mosaics.data.dataloader import InfiniteDataLoader
 from memory_mosaics.evaluation.common_metrics import estimate_loss
-from utils import init_ddp
-from utils import str2bool, get_step_lr, get_cosine_lr
 
 #####################
 # two version of memory mosaics. Pick one as you wish!
@@ -89,7 +85,6 @@ parser.add_argument('--gamma', type=float, default=0.2, help="lr decay factor in
 parser.add_argument('--milestone', type=int, nargs="*", default=[10000], help="milestone in steplr")
 
 # model
-#parser.add_argument('--hash_type',type=str, default='wta', help='wta or sim. winner-take-all or simhash')
 parser.add_argument('--block_size',type=int, default=512, help='block size, aka in-context length')
 parser.add_argument('--n_layer', type=int, default=12, help='num layers')
 parser.add_argument('--n_head', type=int, default=12, help='num heads per layer')
@@ -98,11 +93,11 @@ parser.add_argument('--v_shift',type=int, default=1, help='value right shift')
 parser.add_argument('--att_shift',type=int, default=0, help='additional attn shift')
 
 
-parser.add_argument('--pmem_size', type=int, default=2048, help='memory size')
+parser.add_argument('--pmem_size', type=int, default=2688, help='memory size')
 parser.add_argument('--pmem_count', type=int, default=1, help='memory count')
 
-parser.add_argument('--ic_dropout', type=float, default=0, help='in-context attention score dropout rate')
-parser.add_argument('--hd_dropout', type=float, default=0, help='hidden representation vector dropout rate')
+parser.add_argument('--ic_dropout', type=float, default=0.05, help='in-context attention score dropout rate')
+parser.add_argument('--hd_dropout', type=float, default=0.05, help='hidden representation vector dropout rate')
 
 parser.add_argument('--bias', type=str2bool, default=False, help = "do we use bias inside LayerNorm and Linear layers?")
 parser.add_argument('--weight_tying', type=str2bool, default=True, help = "True: last linear layer and first embedding share weights. False: do not share.")
@@ -116,7 +111,7 @@ parser.add_argument('--k_fe_type', type=str, default='linearconv', help="key fea
 parser.add_argument('--v_fe_type', type=str, default='lowrlinearconv', help="value feature extractor type")
 
 parser.add_argument('--skip_tokens', type=int, default=0, help="skip first skip_tokens tokens in loss function. ")
-parser.add_argument('--v_leaky', type=str2bool, default=False, help="value leaky average")
+#parser.add_argument('--v_leaky', type=str2bool, default=False, help="value leaky average")
 parser.add_argument('--gradient_accumulation_steps',type=int, default=1, help='accumulate gradient to simulate large batch')
 parser.add_argument('--attn_only',type=str2bool, default=False, help='only attention blocks.')
 
@@ -153,7 +148,7 @@ ctx = nullcontext() if device_type == "cpu" else torch.amp.autocast(device_type=
 # attempt to derive vocab_size from the dataset
 data_dir = os.path.join("memory_mosaics/data", args.dataset)
 
-# ok let's assume gpt-2 encodings by default. Activate when training dataset is tinystories
+# ok let's assume gpt-2 encodings by default.
 if master_process:
     logger.info(" assuming GPT-2 encodings...")
 enc = tiktoken.get_encoding("gpt2")
@@ -314,9 +309,6 @@ while True:
                 micro_step == gradient_accumulation_steps - 1
             )
         with ctx:
-            #if args.future_tokens > 1:
-            #    _, loss = model(X, Y[:,0].contiguous(), Y, storyid=storyid)
-            #else:
             _, loss = model(X, Y)
 
             loss = (
