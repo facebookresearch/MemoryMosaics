@@ -11,4 +11,4 @@ This repositories contains several subdirectories relevant to the paper.
 * [ICLL](ICLL): Memory Mosaics code for the In-context Language Learning experiments
 * [Library](Library): A library of efficient Memory Mosaic implementation for language tasks. 
 
-[TODO: test BabiStories, ICLL, Library...]
+[TODO: upload babistories datasets; test BabiStories(done); ICLL(done); Library(done)]

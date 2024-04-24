@@ -126,7 +126,6 @@ class LeakyAverageCuda(nn.Module):
         rootdir = os.path.dirname(__file__)
 
         # cuda 11.4 has a bug, such that one need to use gcc version 10 instead of 11
-        # unfortunately, fairclusters use cuda 11.4 and gcc 11.4
         # https://forums.developer.nvidia.com/t/cuda-11-5-samples-throw-multiple-error-attribute-malloc-does-not-take-arguments/192750
         
         gccversion = subprocess.run(['gcc', '--version'], stdout=subprocess.PIPE)

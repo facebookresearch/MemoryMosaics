@@ -15,8 +15,7 @@ for k in tqdm(range(23)):
 			data = f.readlines()
 		for i in (range(len(data))):
 			story = json.loads(data[i])
-			#story = story.strip().replace('\n\n', ' ')
-
+			
 			# elimite prompt
 			story = story[story.find("[/INST]")+7:].strip()
 
@@ -38,9 +37,7 @@ for k in tqdm(range(23)):
 				if split != -1:
 					story = story[:split]
 			story = story.strip().replace('\n\n', ' ')
-			# if story.find('(verb)') > -1:
-
-			# 	print(story)
+			
 
 			user_symbs = [f'User {i}:' for i in range(10)]
 			for symb in user_symbs:
@@ -61,7 +58,7 @@ for k in tqdm(range(23)):
 
 			stories.append(json.dumps(story)+'\n')
 print(len(stories))
-f = open(f'stories_clean_full_again.txt', 'w')
+f = open(f'stories_clean.txt', 'w')
 f.writelines(stories)
 f.close()
 
