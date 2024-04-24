@@ -33,7 +33,7 @@ Examples:
 
 To generate these startings, use the following scripts:
 ```sh
-python data/mixtral_tinystories/generate_names.py --idx [0-127]
+python generate_names.py --idx [0-127]
 ```
 
 
@@ -46,6 +46,7 @@ Example Prompt:
 Stories Generation: 
 
 * Download story generation prompts from [here](https://huggingface.co/datasets/roneneldan/TinyStories/blob/main/TinyStories_all_data.tar.gz), extract all files to foler `metaprompt/`. 
+
 * Then go to 'metaprompt' folder and split prompt files into small groups by `split_data.py` for the ease of parallelization. 
 
 * Finally, generate BabiStories by the following script (where ${data} ranges from 0 to 24, ${subdata} ranges from 0 to 99): 
