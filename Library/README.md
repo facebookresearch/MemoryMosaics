@@ -2,6 +2,18 @@
 
 A package of Memory Mosaics with a CUDA kernel of the leakyaverage operator. 
 
+
+<p align="center">
+<image src="figure/gpt2.png" width="260" />
+<image src="figure/gpt2-like-mosaic.png" width="400" />
+</p>
+
+<p align="center">
+<em>
+Fig1: Left: Classic GPT2-small transformer. Right: GPT2-like Memory Mosaic
+</em>
+</p>
+
 ## Setup Requirements
 
 
@@ -54,7 +66,7 @@ python prepare.py
 python train_memory_mosaics.py --batch_size [batch_size]
 ```
 
-To reproduce the BabiStories results (batch_size = 512) in the [Memory Mosaic paper](), one need to either distribute batches to different GPUs (e.g. `torchrun --standalone --nproc_per_node=8 train_memory_mosaics.py --batch_size 64 `) or 
+To reproduce the BabiStories results (batch_size = 512) in the [Memory Mosaic paper](http://arxiv.org/tbd), one need to either distribute batches to different GPUs (e.g. `torchrun --standalone --nproc_per_node=8 train_memory_mosaics.py --batch_size 64 `) or 
 use `gradient_accumulation_steps` to simulate large batches (e.g. `torchrun --standalone --nproc_per_node=1 --batch_size 8 train_memory_mosaics.py --batch_size 64 --gradient_accumulation_steps 8`). 
 
 
