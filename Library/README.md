@@ -80,12 +80,13 @@ torchrun --standalone --nproc_per_node=2 train_memory_mosaics.py --compile [True
 
 |block size|batch size |version|compile| time/step (ms)| VREM (GB) | 
 |:-------:|:-------:|:-------:|:-------:|:-------:|:-------:|
-<!-- |512 |8|eft|x| 245  | 7.7 |
-|512 |8|regular|x| 310  | 10.2| -->
 |512 |8|eft|√| 189  | 7.7 |
 |512 |8|regular|√| 190  | 9.4 |
 |2048|2| eft| √ | 247 | 9.0 | 
 |2048|2| regular| √ | 301 | 17.4|
+<!-- |512 |8|eft|x| 245  | 7.7 |
+|512 |8|regular|x| 310  | 10.2| -->
+
 
 
 
