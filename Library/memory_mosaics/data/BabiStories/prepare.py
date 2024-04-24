@@ -1,16 +1,13 @@
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
-from datasets import load_dataset  # huggingface datasets
 from tqdm import tqdm
 import tiktoken
 import json
     
 
-f = open('data/traindataset.txt', 'r')
+f = open('traindataset.txt', 'r')
 traindata = f.readlines()
-f = open('data/valdataset.txt', 'r')
+f = open('valdataset.txt', 'r')
 valdata = f.readlines()
 
 split_dataset = {}

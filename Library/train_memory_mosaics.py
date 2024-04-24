@@ -38,7 +38,7 @@ import argparse
 # always import numpy after import torch.
 import numpy as np
 
-from memory_mosaics.data.tinystories.dataset import TinystoriesDataset
+from memory_mosaics.data.dataset import StoriesDataset
 from memory_mosaics.data.dataloader import InfiniteDataLoader
 from memory_mosaics.evaluation.common_metrics import estimate_loss
 from utils import init_ddp
@@ -108,7 +108,6 @@ parser.add_argument('--bias', type=str2bool, default=False, help = "do we use bi
 parser.add_argument('--weight_tying', type=str2bool, default=True, help = "True: last linear layer and first embedding share weights. False: do not share.")
 
 
-#parser.add_argument('--pos_bias', type=str, default='rope', help="position encoding")
 parser.add_argument('--pre_ln', type=str2bool, default=True, help="pre-layernorm or post-layernorm. Try post-layernorm if hm_dropout > 0. ")
 
 parser.add_argument('--k_kernel_size',type=int, default=1, help='key kernel size')
@@ -152,7 +151,7 @@ ctx = nullcontext() if device_type == "cpu" else torch.amp.autocast(device_type=
 
 
 # attempt to derive vocab_size from the dataset
-data_dir = os.path.join("data", args.dataset)
+data_dir = os.path.join("memory_mosaics/data", args.dataset)
 
 # ok let's assume gpt-2 encodings by default. Activate when training dataset is tinystories
 if master_process:
@@ -163,9 +162,9 @@ encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
 decode = lambda l: enc.decode(l)
 
 
-if args.dataset.lower() in ["tinystories","mixtral_tinystories", "BabiStories"]:
-    train_dataset = TinystoriesDataset(data_dir, block_size=args.block_size, split="train")#, future_tokens=args.future_tokens, return_storyid=args.use_storyid)
-    val_dataset = TinystoriesDataset(data_dir, block_size=args.block_size, split="val")#, future_tokens=args.future_tokens, return_storyid=args.use_storyid)
+if args.dataset in ["BabiStories"]:
+    train_dataset = StoriesDataset(data_dir, block_size=args.block_size, split="train")#, future_tokens=args.future_tokens, return_storyid=args.use_storyid)
+    val_dataset = StoriesDataset(data_dir, block_size=args.block_size, split="val")#, future_tokens=args.future_tokens, return_storyid=args.use_storyid)
     if master_process:
         logger.info(f'train tokens {len(train_dataset):,}')
 else:

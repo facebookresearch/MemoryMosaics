@@ -1,0 +1,9 @@
+matplotlib==3.7.1
+numpy==1.24.4
+tiktoken==0.4.0
+torch==2.1.2
+tqdm==4.65.0
+
+datasets==2.12.0      #for babistories dataset generation 
+transformers==4.37.2  #for babistories dataset generation 
+

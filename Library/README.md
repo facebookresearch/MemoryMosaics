@@ -2,11 +2,25 @@
 
 A package of Memory Mosaics with a CUDA kernel of the leakyaverage operator. 
 
-To install this package, run: 
+## Setup Requirements
+
+
+```bash
+conda create -n mm python=3.8
+conda activate mm 
+pip install -r requirements.txt
+pip install pynvml
+```
+
+
+## Quick start
+
+### Install Memory Mosaics package
 
 ```sh 
 python setup.py install 
 ```
+
 
 This packages provide two versions of memory mosaics implementation: `memory_mosaics.models.memory_mosaics_eft` and `memory_mosaics.models.memory_mosaics`. The first one contains the cuda kernel of leakaverage, and thus fast on long context. The later one use the naive implementation, so that it is easy to modify. 
 
@@ -18,6 +32,29 @@ try:
 except:
 	from memory_mosaics.models.memory_mosaics import StackAssoMem
 ```
+
+### Prepare datasets
+
+* Put BabiStories dataset (`traindataset.txt` and `testdataset.txt`) to `memory_mosaics/data/BabiStories`. For example,
+
+```sh
+cp ../BabiStories/data/*dataset.txt memory_mosaics/data/BabiStories/
+```
+
+* Tokenize the dataset and put them into one larger stream of integers (by numpy.memmap). 
+
+```sh
+cd memory_mosaics/data/BabiStories/
+python prepare.py
+```
+
+* Train Memory Mosaics on BabiStories dataset 
+
+```
+python train_memory_mosaics.py --batch_size [batch_size]
+```
+
+
 
 
 ## Benchmark  

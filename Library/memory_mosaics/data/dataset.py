@@ -4,7 +4,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 import numpy as np
 
-class TinystoriesDataset(Dataset):
+class StoriesDataset(Dataset):
     # randomly samply chunks as example
     def __init__(
         self, data_dir, block_size=512, split="train"):#, future_tokens=1, return_storyid=False):  # split \in [train, val]
