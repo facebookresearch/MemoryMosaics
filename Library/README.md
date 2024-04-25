@@ -60,7 +60,7 @@ cd memory_mosaics/data/BabiStories/
 python prepare.py
 ```
 
-* Train Memory Mosaics on BabiStories dataset 
+### Train Memory Mosaics on BabiStories dataset 
 
 ```
 python train_memory_mosaics.py --batch_size [batch_size]
