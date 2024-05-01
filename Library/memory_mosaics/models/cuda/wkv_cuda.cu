@@ -106,9 +106,8 @@ __global__ void kernel_backward(const int B, const int T, const int C,
         o = no;
     }
 
-    // Multiply by w because the w -> -exp(w) preprocessing is halfway in the backwards pass, even though it's not in the forward pass
     const int _offsetBC = _b * C + _c;
-    _gw[_offsetBC] += gw * _w[_c];
+    _gw[_offsetBC] += gw;
     _gu[_offsetBC] += gu;
 }
 

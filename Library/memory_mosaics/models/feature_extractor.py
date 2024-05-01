@@ -26,13 +26,13 @@ class WKV(torch.autograd.Function):
 
 
         if '32' in FLOAT_MODE:
-            w = -w.contiguous().abs() # -torch.exp(w.contiguous()) # todo --> abs 
-            u = u.contiguous().abs()
+            w = w.contiguous()
+            u = u.contiguous()
             k = k.contiguous()
             v = v.contiguous()
         else:
-            w = -w.float().contiguous().abs() #-torch.exp(w.float().contiguous())
-            u = u.float().contiguous().abs()
+            w = w.float().contiguous()
+            u = u.float().contiguous()
             k = k.float().contiguous()
             v = v.float().contiguous()
   
@@ -177,6 +177,9 @@ class LeakyAverageCuda(nn.Module):
         else:
             leaky_beta_w = self.leaky_beta_w_under
             leaky_beta_u = self.leaky_beta_u_under
+
+        leaky_beta_w = -leaky_beta_w.abs()
+        leaky_beta_u = leaky_beta_u.abs()
 
         output = RUN_CUDA(B, T, C, leaky_beta_w*10, leaky_beta_u*10, gate, x)
         
