@@ -58,7 +58,7 @@ class KeyFeatureExtractor(nn.Module):
         self.leaky_avg = LeakyAvg(config.block_size, config.n_head)
         self.exp_scaling = 10
         self.key_scale = nn.Parameter(torch.ones(1, config.n_head, 1, 1) / self.exp_scaling)
-        self.key_scale_max = math.log(2**16-1) # fits in fp16.
+        self.key_scale_max = 5
 
     def forward(self, x, scale_pow=1):
         B,T,C = x.size()
