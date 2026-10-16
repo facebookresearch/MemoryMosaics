@@ -1,0 +1,57 @@
+# Smoke test: a small Memory Mosaics v2 on the `tiny` corpus, one GPU, a few minutes.
+# Checks the environment end to end (CUDA kernel build, data loader, checkpointing);
+# the loss it reaches means nothing.
+#
+#   bash cluster_corpus/prepare.sh tiny --go
+#   torchrun --nproc_per_node 1 -m training.train config=configs/debug.yaml
+
+name: "debug"
+dump_dir: "dumps/debug"
+steps: 50
+batch_size: 2
+grad_acc_steps: 1
+seq_len: 2048
+seed: 42
+
+optim:
+  lr: 1e-3
+  warmup: 10
+  lr_min_ratio: 0.1
+  clip: 1
+
+distributed:
+  dp_type: fsdp
+  compile: false
+  model_dtype: bf16
+
+model:
+  dim: 512
+  n_layers: 4
+  head_dim: 64
+  ffn_exp: 4
+  multiple_of: 256
+  attn_bias_type: "causal"
+  memory_gate: true
+  layout: "short_long_cluster"
+  short_memory_type: "mosaics"
+  short_mem_window_size: 256
+  n_short_heads: 8
+  long_memory_type: "mosaics"
+  long_key_feature: "leaky_average"
+  long_mem_skip_size: 64
+  n_long_heads: 8
+  n_cluster_heads: 0
+
+data:
+  loader: cluster
+  cluster_data_dir: "/tmp/mm_check/clustered_tiny_k20"
+  cluster_metadata: metadata_train.json
+  clusters_per_step: 0       # 0 = one cluster per sequence
+  max_cached_clusters: 20
+  tokenizer_path: mistralai/Mistral-7B-v0.1
+
+checkpoint:
+  keep_latest: 1
+
+checkpoint_freq: 25
+logging_freq: 5

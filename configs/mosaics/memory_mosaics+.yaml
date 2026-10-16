@@ -1,0 +1,69 @@
+# Memory Mosaics+
+# SWA handles near positions; one Mosaics memory with a plain key handles the rest of the document.
+# ~1.5B parameters (dim 2048 x 24 layers), 16k-token sequences, 4000 steps.
+# Paper scale is 32 nodes x 8 GPUs (batch_size 1 per GPU); scale steps / batch_size to your budget.
+
+name: "memory_mosaics+"
+dump_dir: "dumps/memory_mosaics+"    # overridden by launchers.slurm
+steps: 4000
+batch_size: 1
+grad_acc_steps: 1
+seq_len: 16384
+seed: 42
+
+optim:
+  lr: 3e-4
+  warmup: 200
+  lr_min_ratio: 0.01
+  clip: 1
+
+distributed:
+  dp_type: fsdp
+  compile: true
+  model_dtype: bf16
+
+model:
+  dim: 2048
+  n_layers: 24
+  head_dim: 128
+  ffn_dim_multiplier: 1
+  multiple_of: 256
+  ffn_exp: 4
+  init_method: "current_depth"
+  weight_tying: false
+  # "doc_causal": every memory is confined to the current document (data.add_eos must be true).
+  # "causal": every memory reads the whole packed sequence.
+  attn_bias_type: "doc_causal"
+  memory_gate: true
+  layout: "short_long_cluster"
+
+  # near positions + key feature extraction: sliding-window attention with RoPE
+  short_memory_type: "attention"
+  short_mem_window_size: 256
+  short_mem_rope_theta: 31250.0
+  n_short_heads: 16
+
+  # far positions: Mosaics with a plain key, k_T = phi(x_T) (no leaky average)
+  long_memory_type: "mosaics"
+  long_key_feature: "plain"
+  long_mem_skip_size: 64
+  random_long_mem_skip_size: 192
+  n_long_heads: 16
+
+  n_cluster_heads: 0
+
+data:
+  loader: cluster
+  cluster_data_dir: "data_out/clustered_simple_k1200"   # bash cluster_corpus/prepare.sh simple --go
+  cluster_metadata: metadata_train.json
+  clusters_per_step: 32
+  prefetch_size: 32
+  shuffle_buffer_size: 128
+  max_cached_clusters: 1200
+  tokenizer_path: mistralai/Mistral-7B-v0.1
+
+checkpoint:
+  keep_latest: 1
+
+checkpoint_freq: 250
+logging_freq: 10

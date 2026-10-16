@@ -1,0 +1,53 @@
+# Supervised fine-tuning (SFT) of a pretrained model on math word problems: 262,144
+# MetaMathQA conversations, ~6 epochs (24,800 steps of 16 x 1024 tokens); tested on GSM8K.
+# The model -- family, settings and tokenizer -- comes from the pretrained checkpoint
+# (continue_from.inherit_model), so this config fine-tunes any model of this repository;
+# `model:` below overrides individual settings.
+#
+#   torchrun --nproc_per_node 1 -m training.train config=configs/sft/metamath.yaml
+#
+# Data: a directory of JSONL conversations, one {"messages": [{"role": "user", "content": ...},
+# {"role": "assistant", "content": ...}]} per line; the loss covers the assistant answers.
+
+name: "sft_metamath"
+dump_dir: "dumps/sft_metamath"    # overridden by launchers.slurm
+steps: 24800
+batch_size: 16                 # per GPU; on one GPU: 16 sequences (of seq_len tokens) per step
+grad_acc_steps: 1
+seq_len: 1024
+seed: 42
+
+optim:
+  lr: 9e-5
+  warmup: 2480
+  lr_min_ratio: 0.1
+  scheduler: "cosine"
+  clip: 1.0
+
+distributed:
+  dp_type: fsdp
+  compile: true
+  model_dtype: bf16
+  ac_mode: "none"
+
+continue_from:
+  checkpoint_dir: "dumps/memory_mosaics+/checkpoints/step_4000"   # the pretrained model
+  inherit_model: true
+
+model:
+  # Several conversations are packed per sequence: keep each one to itself.
+  attn_bias_type: "doc_causal"
+  # disable_cluster: true          # two-stage models: fine-tune without the related-task (cluster)
+                                   # memory. Saved with the fine-tuned model: set it to false in its
+                                   # params.json to generate with that memory.
+
+data:
+  loader: sft
+  sft_data_path: "data_out/metamath_sft_262k/train"
+  shuffle_buffer_size: 2048
+
+checkpoint:
+  keep_latest: 1
+
+checkpoint_freq: 1000
+logging_freq: 10

@@ -1,0 +1,70 @@
+# Memory Mosaics v2 (Memory Mosaics at scale, NeurIPS 2025)
+# Separate Mosaics memories for neighbor positions (short) and far positions (long), in
+# parallel on the same input (layout: flat); every memory confined to the current document.
+# ~1.5B parameters (dim 2048 x 24 layers), 16k-token sequences, 4000 steps.
+# Paper scale is 32 nodes x 8 GPUs (batch_size 1 per GPU); scale steps / batch_size to your budget.
+
+name: "memory_mosaics_v2"
+dump_dir: "dumps/memory_mosaics_v2"    # overridden by launchers.slurm
+steps: 4000
+batch_size: 1
+grad_acc_steps: 1
+seq_len: 16384
+seed: 42
+
+optim:
+  lr: 3e-4
+  warmup: 200
+  lr_min_ratio: 0.01
+  clip: 1
+
+distributed:
+  dp_type: fsdp
+  compile: true
+  model_dtype: bf16
+
+model:
+  dim: 2048
+  n_layers: 24
+  head_dim: 128
+  ffn_dim_multiplier: 1
+  multiple_of: 256
+  ffn_exp: 4
+  init_method: "current_depth"
+  weight_tying: false
+  attn_bias_type: "doc_causal"
+  memory_gate: true
+  layout: "flat"
+
+  # near positions: Mosaics over a 256-token sliding window
+  short_memory_type: "mosaics"
+  short_mem_window_size: 256
+  n_short_heads: 16
+
+  # far positions: Mosaics, skipping the 64 most recent tokens (+ up to 192 at random in training)
+  long_memory_type: "mosaics"
+  long_key_feature: "leaky_average"
+  long_mem_skip_size: 64
+  random_long_mem_skip_size: 192
+  n_long_heads: 16
+
+  n_cluster_heads: 0
+
+# Plain pretraining (no clustering): documents packed in random order. Any directory of
+# JSONL documents ({"text": ...} per line) is a source; here, the normalized documents of
+# stage 1 of cluster_corpus/prepare.sh (one directory per source, with sampling weights).
+# They include the documents of the held-out test clusters: a model trained on them has
+# seen those clusters.
+data:
+  loader: pretrain
+  root_dir: "data_out/normalized"     # bash cluster_corpus/prepare.sh simple --go
+  sources:
+    cosmopedia: 1
+  shuffle_buffer_size: 128
+  tokenizer_path: mistralai/Mistral-7B-v0.1
+
+checkpoint:
+  keep_latest: 1
+
+checkpoint_freq: 250
+logging_freq: 10

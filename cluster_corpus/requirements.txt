@@ -1,0 +1,18 @@
+# Dependencies for cluster_corpus/ only (the model code has its own).
+#   pip install -r cluster_corpus/requirements.txt
+#
+# faiss: install the build that matches your machine, BEFORE this file
+# (conda's faiss-gpu brings its own numpy) --
+#   GPU  conda install -c pytorch -c nvidia "faiss-gpu>=1.13"   (older builds need numpy 1.x)
+#   CPU  pip install faiss-cpu          (fine for `cluster fit --cpu`, slow at scale)
+
+datasets>=2.14          # stage 1: streaming HF corpora
+huggingface_hub>=0.20   # stage 1: parquet + ShareGPT downloads
+hf_xet                  # stage 1: faster downloads from Xet-backed HF repos
+pyarrow>=12             # stage 1: read only the text column of parquet sources
+zstandard>=0.21         # stage 1: .jsonl.zst proof-pile-2 dumps
+sentence-transformers>=2.3,<6   # stage 2: nomic-embed (6.x needs transformers 5)
+transformers<5          # stage 2: nomic-embed's remote code breaks on 5.x
+einops>=0.7             # stage 2: required by nomic-embed's remote code
+numpy>=1.24             # stages 2-4
+tqdm>=4.65

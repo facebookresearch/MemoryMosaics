@@ -1,0 +1,25 @@
+# Everything in this repository: training, fine-tuning, generation, evaluation, and building
+# the training corpus (cluster_corpus/).
+torch>=2.5              # flex_attention, torch.library.custom_op (install the build for your CUDA)
+ninja                   # JIT build of the leaky-average CUDA kernel (model/mosaics/cuda/)
+numpy>=1.24
+pyyaml
+transformers>=4.40,<5   # the Mistral-7B tokenizer; nomic-embed's remote code breaks on 5.x
+sentencepiece
+matplotlib              # evaluation/: per-position plots
+datasets>=2.14          # tools/prepare_metamath_sft_data.py; cluster_corpus stage 1
+
+# cluster_corpus/: building the training corpus
+huggingface_hub>=0.20   # stage 1: parquet + ShareGPT downloads
+hf_xet                  # stage 1: faster downloads from Xet-backed HF repos
+pyarrow>=12             # stage 1: read only the text column of parquet sources
+zstandard>=0.21         # stage 1: .jsonl.zst proof-pile-2 dumps
+sentence-transformers>=2.3,<6   # stage 2: nomic-embed (6.x needs transformers 5)
+einops>=0.7             # stage 2: required by nomic-embed's remote code
+# FAISS (stage 3) is not on this list: install the build that matches your machine,
+# BEFORE this file (conda's faiss-gpu brings its own numpy) --
+#   GPU  conda install -c pytorch -c nvidia "faiss-gpu>=1.13"   (older builds need numpy 1.x)
+#   CPU  pip install faiss-cpu          (fine for `cluster fit --cpu`, slow at scale)
+
+# Optional
+# flash-linear-attention  # DeltaNet on CUDA: *_memory_type: deltanet, hybrid: deltanet, rnn
